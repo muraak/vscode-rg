@@ -3,6 +3,10 @@
     "displayName": "ripgrep on VS Code",
     "description": "Execute ripgrep on VSCode.",
     "version": "0.0.1",
+    "repository": {
+		"type": "git",
+		"url": "https://github.com/muraak/vscode-rg"
+	},
     "publisher": "muraak",
     "engines": {
         "vscode": "^1.26.0"
