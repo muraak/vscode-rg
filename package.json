@@ -1,0 +1,45 @@
+{
+    "name": "vscode-rg",
+    "displayName": "ripgrep on VS Code",
+    "description": "Execute ripgrep on VSCode.",
+    "version": "0.0.1",
+    "publisher": "muraak",
+    "engines": {
+        "vscode": "^1.26.0"
+    },
+    "categories": [
+        "Other"
+    ],
+    "activationEvents": [
+        "onCommand:samples.quickInput",
+        "onCommand:rg.test",
+        "onCommand:rg.simpleSearch"
+    ],
+    "main": "./out/extension",
+    "contributes": {
+        "commands": [
+            {
+                "command": "rg.test",
+                "title": "Rg Test"
+            },
+            {
+                "command": "rg.simpleSearch",
+                "title": "Rg Simple Search"
+            }
+        ]
+    },
+    "scripts": {
+        "vscode:prepublish": "npm run compile",
+        "compile": "tsc -p ./",
+        "watch": "tsc -watch -p ./",
+        "postinstall": "node ./node_modules/vscode/bin/install",
+        "test": "npm run compile && node ./node_modules/vscode/bin/test"
+    },
+    "devDependencies": {
+        "typescript": "^2.6.1",
+        "vscode": "^1.1.6",
+        "tslint": "^5.8.0",
+        "@types/node": "^7.0.43",
+        "@types/mocha": "^2.2.42"
+    }
+}
