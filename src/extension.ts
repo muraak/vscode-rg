@@ -3,6 +3,8 @@
 // Import the module and reference it with the alias vscode in your code below
 import {ExtensionContext, commands, window, workspace} from 'vscode';
 import * as child_process from "child_process";
+import * as iconv from "iconv-lite";
+
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -18,15 +20,18 @@ export function deactivate() {
 
 async function rgTest()
 {
-	child_process.exec("rg --version",(error, stdout, stderr) => {
+	child_process.execFile(
+		"rg", ["--version"],
+		{encoding: "buffer"},
+		(error, stdout, stderr) => {
 		if(stdout)
 		{
-			window.showInformationMessage("It works fine! => " + stdout);
+			window.showInformationMessage("It works fine! => " + iconv.decode(stdout, getEncoding()));
 		}
 
 		if(stderr)
 		{
-			window.showErrorMessage(stderr);
+			window.showErrorMessage(iconv.decode(stderr, getEncoding()));
 		}
 	});	
 }
@@ -42,30 +47,29 @@ async function rgSimpleSearch()
 		if(workspace.workspaceFolders)
 		{
 			let dir_path :string = workspace.workspaceFolders[0].uri.fsPath;
-			let cmd :string = "rg --line-number " + result + " " + dir_path;
 
-			child_process.exec(cmd, (error, stdout, stderr) => {
-				if(stdout)
-				{
-					// const newFile = Uri.parse('untitled:' + path.join(dir_path, 'result.log'));
-					// workspace.openTextDocument(newFile).then(document => {
-					// 	window.showTextDocument(document).then(editor => {
-					// 		editor.edit(edit =>{
-					// 			edit.insert(new Position(0, 0), stdout);
-					// 		});
-					// 	});
-					// });
-
-					workspace.openTextDocument({content: stdout, language: 'log'}).then(document => {
+			child_process.execFile(
+				"rg", ["--line-number", result, dir_path],
+				{encoding: "buffer"}, 
+				(error, stdout, stderr) => {
+					if(stdout)
+					{
+					workspace.openTextDocument({content: iconv.decode(stdout, getEncoding()), language: 'log'}).then(document => {
 						window.showTextDocument(document);
 					});
 				}
 
 				if(stderr)
 				{
-					window.showErrorMessage(stderr);
+					window.showErrorMessage(iconv.decode(stderr, getEncoding()));
 				}
 			});
 		}
 	}
+}
+
+function getEncoding()
+{
+	let encoding = workspace.getConfiguration("rg", null).get<string>("encoding");
+	return (encoding) ? encoding : "utf-8";
 }
