@@ -31,11 +31,11 @@
                 "title": "Rg Simple Search"
             }
         ],
-        "configuration":{
+        "configuration": {
             "type": "object",
             "title": "ripgrep on vscode configuration",
             "properties": {
-                "rg.encoding":{
+                "rg.encoding": {
                     "scope": "resource",
                     "type": "string",
                     "default": "utf-8"

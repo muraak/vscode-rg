@@ -49,12 +49,12 @@ async function rgSimpleSearch()
 			let dir_path :string = workspace.workspaceFolders[0].uri.fsPath;
 
 			child_process.execFile(
-				"rg", ["--line-number", result, dir_path],
+				"rg", ["--line-number", result, dir_path, "-E " + getEncoding()],
 				{encoding: "buffer"}, 
 				(error, stdout, stderr) => {
 					if(stdout)
 					{
-					workspace.openTextDocument({content: iconv.decode(stdout, getEncoding()), language: 'log'}).then(document => {
+					workspace.openTextDocument({content: iconv.decode(stdout, "utf-8"), language: 'log'}).then(document => {
 						window.showTextDocument(document);
 					});
 				}
