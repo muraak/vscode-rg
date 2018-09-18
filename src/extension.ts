@@ -76,6 +76,11 @@ async function rgSimpleSearch()
 					});
 				});
 
+				proc.stderr.setEncoding("utf-8");
+				proc.stderr.on('data', (data) =>{
+					window.showErrorMessage(data.toString());
+				});
+
 			});
 		}
 	}
