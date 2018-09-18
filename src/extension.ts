@@ -1,7 +1,7 @@
 'use strict';
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
-import {ExtensionContext, commands, window, workspace} from 'vscode';
+import {ExtensionContext, commands, window, workspace, /*TextEdit,*/ Position} from 'vscode';
 import * as child_process from "child_process";
 import * as iconv from "iconv-lite";
 
@@ -48,21 +48,34 @@ async function rgSimpleSearch()
 		{
 			let dir_path :string = workspace.workspaceFolders[0].uri.fsPath;
 
-			child_process.execFile(
-				"rg", ["--line-number", result, dir_path, "-E " + getEncoding()],
-				{encoding: "buffer"}, 
-				(error, stdout, stderr) => {
-					if(stdout)
-					{
-					workspace.openTextDocument({content: iconv.decode(stdout, "utf-8"), language: 'log'}).then(document => {
-						window.showTextDocument(document);
-					});
-				}
+			// child_process.execFile(
+			// 	"rg", ["--line-number", result, dir_path, "-E " + getEncoding()],
+			// 	{encoding: "buffer"}, 
+			// 	(error, stdout, stderr) => {
+			// 		if(stdout)
+			// 		{
+			// 		workspace.openTextDocument({content: iconv.decode(stdout, "utf-8"), language: 'log'}).then(document => {
+			// 			window.showTextDocument(document);
+			// 		});
+			// 	}
 
-				if(stderr)
-				{
-					window.showErrorMessage(iconv.decode(stderr, getEncoding()));
-				}
+			// 	if(stderr)
+			// 	{
+			// 		window.showErrorMessage(iconv.decode(stderr, getEncoding()));
+			// 	}
+			// });
+			workspace.openTextDocument({language: 'log'}).then(document => {
+				
+				let proc = child_process.spawn("rg", ["--line-number", result, dir_path, "-E " + getEncoding()]);
+				proc.stdout.setEncoding("utf-8");
+				proc.stdout.on('data', (data) => {
+					window.showTextDocument(document).then(e =>{
+						e.edit(edit => {
+							edit.insert(new Position(document.lineCount, 0), data.toString());
+						});
+					});
+				});
+
 			});
 		}
 	}
