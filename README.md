@@ -20,9 +20,19 @@
  "workbench.editor.enablePreview": false
 ```
 
-## Release Notes
-### 1.0.0
+## Note
+### grep結果について
+grep結果はVSCodeの終了/再起動時，または本エクステンションの無効化時に削除されます。<br/>
+結果を残したい場合は[Ctrl]+[Shift]+[S]で"別の場所"に保存してください。
 
-Initial release of vscode-rg
+## Release Notes
+### 0.0.1
+プロトタイプ初版
+### 0.0.2
+結果が逐次表示されるように変更
+### 0.0.3
+結果が更新される度にエディタが表示されないように変更
+### 1.0.0
+リリース初版予定
 
 **Enjoy!**
