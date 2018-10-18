@@ -1,9 +1,8 @@
 'use strict';
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
-import { ExtensionContext, commands, window, workspace, Uri } from 'vscode';
+import { ExtensionContext, commands, window, workspace, Uri, ViewColumn } from 'vscode';
 import * as child_process from "child_process";
-import * as iconv from "iconv-lite";
 import { tmpdir } from 'os';
 import * as path from 'path';
 import { appendFile, unlink } from 'fs';
@@ -40,18 +39,20 @@ export function deactivate() {
 }
 
 async function rgTest() {
-	child_process.execFile(
-		"rg", ["--version"],
-		{ encoding: "buffer" },
-		(error, stdout, stderr) => {
-			if (stdout) {
-				window.showInformationMessage("It works fine! => " + iconv.decode(stdout, getEncoding()));
-			}
+	// child_process.execFile(
+	// 	"rg", ["--version"],
+	// 	{ encoding: "buffer" },
+	// 	(error, stdout, stderr) => {
+	// 		if (stdout) {
+	// 			window.showInformationMessage("It works fine! => " + iconv.decode(stdout, getEncoding()));
+	// 		}
 
-			if (stderr) {
-				window.showErrorMessage(iconv.decode(stderr, getEncoding()));
-			}
-		});
+	// 		if (stderr) {
+	// 			window.showErrorMessage(iconv.decode(stderr, getEncoding()));
+	// 		}
+	// 	});
+
+	showWebView();
 }
 
 async function rgSimpleSearch() {
@@ -114,4 +115,41 @@ function getTmpFileName(): string {
 function getEncoding() {
 	let encoding = workspace.getConfiguration("rg", null).get<string>("encoding");
 	return (encoding) ? encoding : "utf-8";
+}
+
+function showWebView()
+{
+	// Create and show panel
+	const panel = window.createWebviewPanel('catCoding', "Rg Search Request", ViewColumn.Beside, { });
+	
+	// And set its HTML content
+    panel.webview.html = getSerchViewHtml();
+}
+
+function getSerchViewHtml() {
+	return `
+		<!DOCTYPE html>
+    	<html lang="en">
+    		<head>
+    			<meta charset="UTF-8">
+    			<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    			<title>Rg Search Menu</title>
+    		</head>
+    		<body>
+				<table border="0">
+					<tr>
+						<td><p>検索対象：</p></td>
+						<td><input type="text"></td>
+					</tr>
+					<tr>
+						<td><p>含めるファイル：</p></td>
+						<td><input type="text"></td>
+					</tr>
+					<tr>
+						<td><p>除外するファイル：</p></td>
+						<td><input type="text"></td>
+					</tr>
+				</table>
+    		</body>
+    	</html>`;
 }
