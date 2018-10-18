@@ -23,12 +23,12 @@ export function activate(context: ExtensionContext) {
 // this method is called when your extension is deactivated
 export function deactivate() {
 
-	// 	// !HACK
-	// 	// I did wanted to delete this temp file when this file closed in VSCode.
-	// 	// And I tried to do it by using onDidCloseTextDocument
-	// 	// but this event didn't fire when I expected to.
-	// 	// I googled it and finally realized that 
-	// 	// it seems to be troublesome (I wasted my weekend...)
+	// !HACK
+	// I did wanted to delete this temp file when this file closed in VSCode.
+	// And I tried to do it by using onDidCloseTextDocument
+	// but this event didn't fire when I expected to.
+	// I googled it and finally realized that 
+	// it seems to be troublesome (I wasted my weekend...)
 
 	// remove tmp files
 	genarated_tmp_files.forEach(element => {
