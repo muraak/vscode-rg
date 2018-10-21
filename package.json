@@ -2,11 +2,12 @@
     "name": "vscode-rg",
     "displayName": "ripgrep on VS Code",
     "description": "Execute ripgrep on VSCode.",
-    "version": "0.0.3",
+    "version": "0.0.4",
     "repository": {
         "type": "git",
         "url": "https://github.com/muraak/vscode-rg"
     },
+    "icon": "resource/icon.png",
     "publisher": "muraak",
     "engines": {
         "vscode": "^1.26.0"
@@ -28,8 +29,12 @@
                 "title": "Rg Test"
             },
             {
-                "command": "rg.simpleSearch",
-                "title": "Rg Simple Search"
+                "command": "rg.quickSearch",
+                "title": "Rg Quick Search"
+            },
+            {
+                "command": "rg.detailSearch",
+                "title": "Rg Detail Search"
             }
         ],
         "configuration": {
