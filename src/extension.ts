@@ -42,20 +42,18 @@ export function deactivate() {
 }
 
 async function rgTest() {
-	// child_process.execFile(
-	// 	"rg", ["--version"],
-	// 	{ encoding: "buffer" },
-	// 	(error, stdout, stderr) => {
-	// 		if (stdout) {
-	// 			window.showInformationMessage("It works fine! => " + iconv.decode(stdout, getEncoding()));
-	// 		}
+	child_process.execFile(
+		"rg", ["--version"],
+		{ encoding: "buffer" },
+		(error, stdout, stderr) => {
+			if (stdout) {
+				window.showInformationMessage("It works fine! => " + iconv.decode(stdout, getEncoding()));
+			}
 
-	// 		if (stderr) {
-	// 			window.showErrorMessage(iconv.decode(stderr, getEncoding()));
-	// 		}
-	// 	});
-
-	showWebView();
+			if (stderr) {
+				window.showErrorMessage(iconv.decode(stderr, getEncoding()));
+			}
+		});
 }
 
 async function rgQuickSearch() {
