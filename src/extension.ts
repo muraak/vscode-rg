@@ -171,44 +171,6 @@ function getEncoding() {
 	return (encoding) ? encoding : "utf-8";
 }
 
-<<<<<<< HEAD
-function showWebView()
-{
-	// Create and show panel
-	const panel = window.createWebviewPanel('catCoding', "Rg Search Request", ViewColumn.Beside, { });
-	
-	// And set its HTML content
-    panel.webview.html = getSerchViewHtml();
-}
-
-function getSerchViewHtml() {
-	return `
-		<!DOCTYPE html>
-    	<html lang="en">
-    		<head>
-    			<meta charset="UTF-8">
-    			<meta name="viewport" content="width=device-width, initial-scale=1.0">
-    			<title>Rg Search Menu</title>
-    		</head>
-    		<body>
-				<table border="0">
-					<tr>
-						<td><p>検索対象：</p></td>
-						<td><input type="text"></td>
-					</tr>
-					<tr>
-						<td><p>含めるファイル：</p></td>
-						<td><input type="text"></td>
-					</tr>
-					<tr>
-						<td><p>除外するファイル：</p></td>
-						<td><input type="text"></td>
-					</tr>
-				</table>
-    		</body>
-    	</html>`;
-}
-=======
 let wv_panel: WebviewPanel | undefined = undefined;
 
 function showDetailSearchWebView(context: ExtensionContext) {
@@ -243,4 +205,3 @@ function getDetailSearchViewHtml(context: ExtensionContext) {
 		Uri.file(path.join(context.extensionPath, 'html', 'detailSearch.html')).fsPath,
 		'utf8');
 }
->>>>>>> 9292d17124c927f0bc3919926afbbe3d86f0db89
