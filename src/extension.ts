@@ -1,12 +1,14 @@
 'use strict';
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
-import { ExtensionContext, commands, window, workspace, Uri, ViewColumn } from 'vscode';
+
+import { ExtensionContext, commands, window, workspace, Uri, ViewColumn, WebviewPanel, StatusBarAlignment } from 'vscode';
 import * as child_process from "child_process";
 import { tmpdir } from 'os';
 import * as path from 'path';
 import { appendFile, unlink } from 'fs';
 import * as Moment from 'moment';
+import * as fs from 'fs';
 
 
 let genarated_tmp_files: string[] = [];
@@ -16,7 +18,8 @@ let genarated_tmp_files: string[] = [];
 export function activate(context: ExtensionContext) {
 
 	context.subscriptions.push(commands.registerCommand('rg.test', rgTest));
-	context.subscriptions.push(commands.registerCommand('rg.simpleSearch', rgSimpleSearch));
+	context.subscriptions.push(commands.registerCommand('rg.quickSearch', rgQuickSearch));
+	context.subscriptions.push(commands.registerCommand('rg.detailSearch', () => { showDetailSearchWebView(context); }));
 }
 
 // this method is called when your extension is deactivated
@@ -55,7 +58,7 @@ async function rgTest() {
 	showWebView();
 }
 
-async function rgSimpleSearch() {
+async function rgQuickSearch() {
 	const result = await window.showInputBox({
 		prompt: 'input the search word.',
 	});
@@ -65,7 +68,45 @@ async function rgSimpleSearch() {
 	}
 }
 
-function execRgCommand(input: string) {
+function rgDetailSearch(options_obj: any) {
+
+	let sword = options_obj.sword;
+
+	if(wv_panel)
+	{
+		wv_panel.dispose();
+	}
+
+	if (isString(sword)) {
+		let options: string[] | undefined = undefined;
+		let globe = options_obj.globe;
+		if (isString(globe)) {
+			if(globe !== "") {
+				options = globe.replace(/\s/g, '').split(",").map((value) => { return "-g " + value; });
+			}
+		}
+		
+		let raw = options_obj.raw;
+		if(isString(raw)) {
+			if(raw !== "") {
+				if(options){
+					options = options.concat(raw.split(/\s|\n/g));
+				}
+				else {
+					options = raw.split(/\s|\n/g);
+				}
+			}
+		}
+
+		execRgCommand(sword, options);
+	}
+}
+
+function isString(x: any): x is string {
+	return typeof x === "string";
+}
+
+function execRgCommand(input: string, options?: string[]) {
 
 	let file_path = path.join(tmpdir(), getTmpFileName());
 	let file_uri = Uri.file(file_path);
@@ -81,8 +122,17 @@ function execRgCommand(input: string) {
 
 					if (workspace.workspaceFolders) {
 						let dir_path: string = workspace.workspaceFolders[0].uri.fsPath;
-						let proc = child_process.spawn("rg", ["--line-number", input, dir_path, "-E " + getEncoding()], { shell: true });
+						let args = ["--line-number", input, dir_path, "-E " + getEncoding()];
+						if (options) {
+							args = args.concat(options);
+						}
+						let proc = child_process.spawn("rg", args, { shell: true });
 						proc.stdout.setEncoding("utf-8");
+
+						let icon = window.createStatusBarItem(StatusBarAlignment.Right);
+						icon.color = "yellow";
+						icon.text = "$(pulse)rg searching...";
+						icon.show();
 
 						proc.stdout.on('data', (data) => {
 							appendFile(file_path, data.toString(), err => {
@@ -98,6 +148,10 @@ function execRgCommand(input: string) {
 									window.showErrorMessage(err.message);
 								}
 							});
+						});
+
+						proc.on("exit", () =>{
+							icon.dispose();
 						});
 					}
 				});
@@ -117,6 +171,7 @@ function getEncoding() {
 	return (encoding) ? encoding : "utf-8";
 }
 
+<<<<<<< HEAD
 function showWebView()
 {
 	// Create and show panel
@@ -153,3 +208,39 @@ function getSerchViewHtml() {
     		</body>
     	</html>`;
 }
+=======
+let wv_panel: WebviewPanel | undefined = undefined;
+
+function showDetailSearchWebView(context: ExtensionContext) {
+
+	if (wv_panel) {
+		wv_panel.reveal(ViewColumn.Beside);
+	}
+	else {
+		// create and show webview panel
+		wv_panel = window.createWebviewPanel(
+			"rgDetailSearch", "Rg Detail Search", ViewColumn.Beside, { enableScripts: true });
+		wv_panel.webview.html = getDetailSearchViewHtml(context);
+
+		// Handle messages from the webview
+		wv_panel.webview.onDidReceiveMessage(message => {
+			switch (message.command) {
+				case 'detailSearch':
+					rgDetailSearch(message);
+					return;
+			}
+		});
+
+		// Release the wv_panel when that is disposed
+		wv_panel.onDidDispose(() => {
+			wv_panel = undefined;
+		});
+	}
+}
+
+function getDetailSearchViewHtml(context: ExtensionContext) {
+	return fs.readFileSync(
+		Uri.file(path.join(context.extensionPath, 'html', 'detailSearch.html')).fsPath,
+		'utf8');
+}
+>>>>>>> 9292d17124c927f0bc3919926afbbe3d86f0db89
