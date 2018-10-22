@@ -9,6 +9,7 @@ import * as path from 'path';
 import { appendFile, unlink } from 'fs';
 import * as Moment from 'moment';
 import * as fs from 'fs';
+import * as iconv from "iconv-lite"
 
 
 let genarated_tmp_files: string[] = [];
