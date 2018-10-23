@@ -45,6 +45,16 @@
                     "scope": "resource",
                     "type": "string",
                     "default": "utf-8"
+                },
+                "rg.quick.globe": {
+                    "scope": "resource",
+                    "type": "string",
+                    "default": ""
+                },
+                "rg.quick.globe": {
+                    "scope": "resource",
+                    "type": "string",
+                    "default": ""
                 }
             }
         }

@@ -63,7 +63,11 @@ async function rgQuickSearch() {
 	});
 
 	if (result) {
-		execRgCommand(result);
+		rgDetailSearch({
+			sword: result,
+			globe: workspace.getConfiguration("rg", null).get<string>("quick.globe"),
+			raw: workspace.getConfiguration("rg", null).get<string>("quick.raw")
+		});
 	}
 }
 
