@@ -9,7 +9,8 @@ import * as path from 'path';
 import { appendFile, unlink } from 'fs';
 import * as Moment from 'moment';
 import * as fs from 'fs';
-import * as iconv from "iconv-lite"
+import * as iconv from "iconv-lite";
+import * as reultTree from "./resultTree";
 
 
 let genarated_tmp_files: string[] = [];
@@ -55,6 +56,10 @@ async function rgTest() {
 				window.showErrorMessage(iconv.decode(stderr, getEncoding()));
 			}
 		});
+
+	let list = reultTree.ResultParser.getFileList(Uri.parse("C:\\Users\\BG17059\\Desktop\\vscode-rg-result_20190117191023231.log").fsPath);
+
+	console.log(list);
 }
 
 async function rgQuickSearch() {
