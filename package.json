@@ -16,13 +16,31 @@
         "Other"
     ],
     "activationEvents": [
+        "onView:nodeDependencies",
         "onCommand:samples.quickInput",
         "onCommand:rg.test",
         "onCommand:rg.simpleSearch",
         "*"
     ],
-    "main": "./out/extension",
+    "": "./out/extension",
     "contributes": {
+        "viewsContainers": {
+			"activitybar": [
+				{
+					"id": "package-explorer",
+                    "title": "Package Explorer",
+                    "icon": "default"
+				}
+			]
+        },
+        "views": {
+			"package-explorer": [
+				{
+					"id": "nodeDependencies",
+					"name": "Node Dependencies"
+				}
+            ]
+        },
         "commands": [
             {
                 "command": "rg.test",

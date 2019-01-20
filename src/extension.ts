@@ -2,7 +2,7 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 
-import { ExtensionContext, commands, window, workspace, Uri, ViewColumn, WebviewPanel, StatusBarAlignment } from 'vscode';
+import { ExtensionContext, commands, window, workspace, Uri, ViewColumn, WebviewPanel, StatusBarAlignment, Range, Position, TextEditorRevealType, Selection } from 'vscode';
 import * as child_process from "child_process";
 import { tmpdir } from 'os';
 import * as path from 'path';
@@ -10,10 +10,11 @@ import { appendFile, unlink } from 'fs';
 import * as Moment from 'moment';
 import * as fs from 'fs';
 import * as iconv from "iconv-lite";
-import * as reultTree from "./resultTree";
+import { SearchResultProvider } from "./resultTree";
 
 
 let genarated_tmp_files: string[] = [];
+let searchResultProvider = new SearchResultProvider();
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -22,6 +23,18 @@ export function activate(context: ExtensionContext) {
 	context.subscriptions.push(commands.registerCommand('rg.test', rgTest));
 	context.subscriptions.push(commands.registerCommand('rg.quickSearch', rgQuickSearch));
 	context.subscriptions.push(commands.registerCommand('rg.detailSearch', () => { showDetailSearchWebView(context); }));
+	commands.registerCommand("rg.jumpToSearchResult", ((file, line) => {
+		workspace.openTextDocument(Uri.file(file)).then((doc) => {
+			window.showTextDocument(doc).then((editor) => {
+				editor.selection = new Selection(new Position(line - 1, 0), new Position(line - 1, 0));
+				editor.revealRange(new Range(new Position(line - 1, 0),new Position(line - 1, 0)), TextEditorRevealType.InCenter);
+			});
+		});
+	}));
+
+	// searchResultProvider = new SearchResultProvider();
+
+	window.registerTreeDataProvider('nodeDependencies', searchResultProvider);
 }
 
 // this method is called when your extension is deactivated
@@ -56,10 +69,9 @@ async function rgTest() {
 				window.showErrorMessage(iconv.decode(stderr, getEncoding()));
 			}
 		});
-
-	let list = reultTree.ResultParser.getFileList(Uri.parse("C:\\Users\\BG17059\\Desktop\\vscode-rg-result_20190117191023231.log").fsPath);
-
-	console.log(list);
+	
+	// searchResultProvider.add("test");
+	// searchResultProvider.update("test", fs.readFileSync(Uri.parse("/Users/muraak/Desktop/vscode-rg-result_20190120020219723.log").fsPath, "utf-8"));
 }
 
 async function rgQuickSearch() {
@@ -116,7 +128,8 @@ function isString(x: any): x is string {
 
 function execRgCommand(input: string, options?: string[]) {
 
-	let file_path = path.join(tmpdir(), getTmpFileName());
+	let tmp_file_name = getTmpFileName();
+	let file_path = path.join(tmpdir(), tmp_file_name);
 	let file_uri = Uri.file(file_path);
 
 	appendFile(file_path, "", err => {
@@ -124,6 +137,9 @@ function execRgCommand(input: string, options?: string[]) {
 
 			// add to internal manage array
 			genarated_tmp_files.push(file_path);
+
+			// add tree to search result
+			searchResultProvider.add(tmp_file_name);
 
 			workspace.openTextDocument(file_uri).then(document => {
 				window.showTextDocument(document).then(() => {
@@ -143,6 +159,9 @@ function execRgCommand(input: string, options?: string[]) {
 						icon.show();
 
 						proc.stdout.on('data', (data) => {
+							
+							// update tree
+							searchResultProvider.update(tmp_file_name, data.toString());
 							appendFile(file_path, data.toString(), err => {
 								if (err) {
 									window.showErrorMessage(err.message);
@@ -151,6 +170,7 @@ function execRgCommand(input: string, options?: string[]) {
 						});
 
 						proc.stderr.on('data', (data) => {
+							searchResultProvider.update(tmp_file_name, data.toString());
 							appendFile(file_path, data.toString(), err => {
 								if (err) {
 									window.showErrorMessage(err.message);
