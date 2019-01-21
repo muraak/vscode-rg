@@ -23,18 +23,31 @@ export function activate(context: ExtensionContext) {
 	context.subscriptions.push(commands.registerCommand('rg.test', rgTest));
 	context.subscriptions.push(commands.registerCommand('rg.quickSearch', rgQuickSearch));
 	context.subscriptions.push(commands.registerCommand('rg.detailSearch', () => { showDetailSearchWebView(context); }));
+	
+	// bind the function to context menu of search result
+	context.subscriptions.push(commands.registerCommand('searchResult.foldSameLevelNode', (node) => { 
+		// searchResultProvider.foldNodesAtSameLevel(node.contextValue, node.search_id);
+	}));
+
+	context.subscriptions.push(commands.registerCommand('searchResult.deleteNode', (node) => { 
+		searchResultProvider.deleteNode(node);
+	}));
+
+	// bind the function executed when search result item was selected 
 	commands.registerCommand("rg.jumpToSearchResult", ((file, line) => {
 		workspace.openTextDocument(Uri.file(file)).then((doc) => {
-			window.showTextDocument(doc).then((editor) => {
+			window.showTextDocument(doc, undefined, true/*preserve focus*/).then((editor) => {
 				editor.selection = new Selection(new Position(line - 1, 0), new Position(line - 1, 0));
 				editor.revealRange(new Range(new Position(line - 1, 0),new Position(line - 1, 0)), TextEditorRevealType.InCenter);
+				// take the focus back to result view
+				commands.executeCommand("workbench.view.extension.rg-search-result");
 			});
 		});
 	}));
 
 	// searchResultProvider = new SearchResultProvider();
 
-	window.registerTreeDataProvider('nodeDependencies', searchResultProvider);
+	window.registerTreeDataProvider('searchResult', searchResultProvider);
 }
 
 // this method is called when your extension is deactivated
@@ -45,7 +58,7 @@ export function deactivate() {
 	// And I tried to do it by using onDidCloseTextDocument
 	// but this event didn't fire when I expected to.
 	// I googled it and finally realized that 
-	// it seems to be troublesome (I wasted my weekend...)
+	// it seems to be troublesome (I wasted my fuckin' weekend...)
 
 	// remove tmp files
 	genarated_tmp_files.forEach(element => {
@@ -69,9 +82,6 @@ async function rgTest() {
 				window.showErrorMessage(iconv.decode(stderr, getEncoding()));
 			}
 		});
-	
-	// searchResultProvider.add("test");
-	// searchResultProvider.update("test", fs.readFileSync(Uri.parse("/Users/muraak/Desktop/vscode-rg-result_20190120020219723.log").fsPath, "utf-8"));
 }
 
 async function rgQuickSearch() {
@@ -140,6 +150,8 @@ function execRgCommand(input: string, options?: string[]) {
 
 			// add tree to search result
 			searchResultProvider.add(tmp_file_name);
+			// show search result view
+			commands.executeCommand("workbench.view.extension.rg-search-result");
 
 			workspace.openTextDocument(file_uri).then(document => {
 				window.showTextDocument(document).then(() => {

@@ -16,28 +16,28 @@
         "Other"
     ],
     "activationEvents": [
-        "onView:nodeDependencies",
+        "onView:searchResult",
         "onCommand:samples.quickInput",
         "onCommand:rg.test",
         "onCommand:rg.simpleSearch",
         "*"
     ],
-    "": "./out/extension",
+    "main": "./out/extension",
     "contributes": {
         "viewsContainers": {
 			"activitybar": [
 				{
-					"id": "package-explorer",
-                    "title": "Package Explorer",
-                    "icon": "default"
+					"id": "rg-search-result",
+                    "title": "Rg Search Results",
+                    "icon": "resource/rg-search.svg"
 				}
 			]
         },
         "views": {
-			"package-explorer": [
+			"rg-search-result": [
 				{
-					"id": "nodeDependencies",
-					"name": "Node Dependencies"
+					"id": "searchResult",
+					"name": "Search Result"
 				}
             ]
         },
@@ -53,8 +53,20 @@
             {
                 "command": "rg.detailSearch",
                 "title": "Rg Detail Search"
+            },
+            {
+                "command": "searchResult.deleteNode",
+                "title": "Delete" 
             }
         ],
+        "menus": {
+            "view/item/context": [
+                {
+                    "command": "searchResult.deleteNode",
+                    "when": "view == searchResult"
+                }
+            ]
+        },
         "configuration": {
             "type": "object",
             "title": "ripgrep on vscode configuration",

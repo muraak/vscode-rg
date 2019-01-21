@@ -49,6 +49,38 @@ export class SearchResultProvider implements vscode.TreeDataProvider<SearchResul
         }
     }
 
+    public deleteNode(node :SearchResultTreeItem) {
+        this.searchResultTree.deleteNode(node);
+        this.refresh();
+    }
+
+    // public foldNodesAtSameLevel(contextValue: string, search_id?: string) {
+        
+    //     let roots = this.searchResultTree.roots.slice();
+    //     this.searchResultTree.roots = [];
+    //     this.refresh();
+        
+    //     if(contextValue === "root") {
+    //         for(var i = 0; i < roots.length; i++)
+    //         {
+    //             this.searchResultTree.roots[i].collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
+    //         }
+    //     }
+    //     else if(contextValue === "file"){
+    //         if(search_id) {
+    //             let parent = roots[roots.findIndex(value => {return value.label === search_id;})];
+
+    //             for(var j = 0; j < parent.children.length; j++){
+    //                 parent.children[j] = SearchResultTreeItem.recreateFileNode( parent.children[j], vscode.TreeItemCollapsibleState.Collapsed);
+    //             }
+    //         }
+    //     }
+
+    //     this.searchResultTree.roots = roots.slice();
+
+    //     this.refresh();
+    // }
+
 }
 
 export class SearchResultTree {
@@ -98,7 +130,7 @@ export class SearchResultTree {
             else {
                 let new_file_node 
                     = SearchResultTreeItem.createFileNode(
-                        file, vscode.TreeItemCollapsibleState.Expanded);
+                        search_id, file, vscode.TreeItemCollapsibleState.Expanded);
                 
                 search.children.push(new_file_node);
 
@@ -107,6 +139,21 @@ export class SearchResultTree {
         }
         else {
             return undefined;
+        }
+    }
+
+    public deleteNode(node :SearchResultTreeItem) {
+        if(node.contextValue === 'root') {
+            this.roots.splice(this.roots.findIndex(value => {return value.label === node.label;}), 1);
+        }
+        else if(node.contextValue === 'file') {
+            let root = this.roots[this.roots.findIndex(value => {return value.label === node.search_id;})];
+            root.children.splice(root.children.findIndex(value => {return value.label === node.label;}), 1);
+        }
+        else if(node.contextValue === 'result') {
+            let root = this.roots[this.roots.findIndex(value => {return value.search_id === node.search_id;})];
+            let file = root.children[root.children.findIndex(value => {return value.label === node.file;})];
+            file.children.splice(file.children.findIndex(value => {return (value.label === node.label) && (value.line === node.line);}), 1);
         }
     }
 
@@ -126,6 +173,7 @@ export class SearchResultTree {
 
 export class SearchResultTreeItem extends vscode.TreeItem {
 
+    public search_id :string = "";
     public file: string = "";
     public line: number = 0;
     public body: string = "";
@@ -141,12 +189,22 @@ export class SearchResultTreeItem extends vscode.TreeItem {
     }
 
     public static createFileNode(
+        search_id: string,
         file: string,
         collapsibleState: vscode.TreeItemCollapsibleState): SearchResultTreeItem {
         let node = new SearchResultTreeItem(file, collapsibleState);
+        node.search_id = search_id;
         node.contextValue = "file";
         return node;
     }
+
+    // public static recreateFileNode(oldNode :SearchResultTreeItem, newCollapseState :vscode.TreeItemCollapsibleState) {
+        
+    //     let new_node = this.createFileNode(oldNode.search_id, (oldNode.label)?oldNode.label:"", newCollapseState);
+    //     new_node.children = oldNode.children.slice();
+
+    //     return new_node;
+    // }
 
     public static createResultNode(
         file: string,
@@ -172,5 +230,4 @@ export class SearchResultTreeItem extends vscode.TreeItem {
             }
         }
     }
-
 }
