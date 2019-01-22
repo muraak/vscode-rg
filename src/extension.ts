@@ -147,7 +147,7 @@ function isString(x: any): x is string {
 
 function execRgCommand(input: string, options?: string[]) {
 
-	let tmp_file_name = getTmpFileName();
+	let tmp_file_name = getTmpFileName(input);
 	let search_id = getSearchId(input);
 	let file_path = path.join(tmpdir(), tmp_file_name);
 	let file_uri = Uri.file(file_path);
@@ -210,8 +210,9 @@ function execRgCommand(input: string, options?: string[]) {
 	});
 }
 
-function getTmpFileName(): string {
+function getTmpFileName(sword: string): string {
 	let file_name = "vscode-rg-result_";
+	file_name += sword + "_";
 	file_name += Moment().format("YYYYMMDDHHmmssSSS");
 	return file_name + ".log";
 }

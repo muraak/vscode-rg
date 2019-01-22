@@ -114,7 +114,7 @@ export class SearchResultTree {
                     let node = this.findOrCreateFileNodeToAdd(search_id, result!.file);
                     node!.addChildToFileNode(
                         SearchResultTreeItem.createResultNode(
-                            result!.file, result!.line, result!.body,
+                            search_id, result!.file, result!.line, result!.body,
                             vscode.TreeItemCollapsibleState.None));
                 }
             }
@@ -156,7 +156,7 @@ export class SearchResultTree {
             root.children.splice(root.children.findIndex(value => {return value.label === node.label;}), 1);
         }
         else if(node.contextValue === 'result') {
-            let root = this.roots[this.roots.findIndex(value => {return value.search_id === node.search_id;})];
+            let root = this.roots[this.roots.findIndex(value => {return value.label === node.search_id;})];
             let file = root.children[root.children.findIndex(value => {return value.label === node.file;})];
             file.children.splice(file.children.findIndex(value => {return (value.label === node.label) && (value.line === node.line);}), 1);
         }
@@ -220,11 +220,13 @@ export class SearchResultTreeItem extends vscode.TreeItem {
     // }
 
     public static createResultNode(
+        search_id :string,
         file: string,
         line: number,
         body: string,
         collapsibleState: vscode.TreeItemCollapsibleState): SearchResultTreeItem {
         let node = new SearchResultTreeItem(body, collapsibleState);
+        node.search_id = search_id;
         node.file = file;
         node.line = line;
         node.body = body;
