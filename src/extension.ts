@@ -25,12 +25,21 @@ export function activate(context: ExtensionContext) {
 	context.subscriptions.push(commands.registerCommand('rg.detailSearch', () => { showDetailSearchWebView(context); }));
 	
 	// bind the function to context menu of search result
-	context.subscriptions.push(commands.registerCommand('searchResult.foldSameLevelNode', (node) => { 
+	// context.subscriptions.push(commands.registerCommand('searchResult.foldSameLevelNode', (node) => { 
 		// searchResultProvider.foldNodesAtSameLevel(node.contextValue, node.search_id);
-	}));
+	// }));
 
 	context.subscriptions.push(commands.registerCommand('searchResult.deleteNode', (node) => { 
 		searchResultProvider.deleteNode(node);
+	}));
+	context.subscriptions.push(commands.registerCommand('searchResult.renameNode', (node) => { 
+		window.showInputBox({prompt: "input the new name."}).then((value) => {
+			if(node.contextValue === 'root') {
+				if(value) {
+					searchResultProvider.renameNode(node, value);
+				}
+			}
+		});
 	}));
 
 	// bind the function executed when search result item was selected 
@@ -139,6 +148,7 @@ function isString(x: any): x is string {
 function execRgCommand(input: string, options?: string[]) {
 
 	let tmp_file_name = getTmpFileName();
+	let search_id = getSearchId(input);
 	let file_path = path.join(tmpdir(), tmp_file_name);
 	let file_uri = Uri.file(file_path);
 
@@ -149,7 +159,7 @@ function execRgCommand(input: string, options?: string[]) {
 			genarated_tmp_files.push(file_path);
 
 			// add tree to search result
-			searchResultProvider.add(tmp_file_name);
+			searchResultProvider.add(search_id);
 			// show search result view
 			commands.executeCommand("workbench.view.extension.rg-search-result");
 
@@ -173,7 +183,7 @@ function execRgCommand(input: string, options?: string[]) {
 						proc.stdout.on('data', (data) => {
 							
 							// update tree
-							searchResultProvider.update(tmp_file_name, data.toString());
+							searchResultProvider.update(search_id, data.toString());
 							appendFile(file_path, data.toString(), err => {
 								if (err) {
 									window.showErrorMessage(err.message);
@@ -182,7 +192,7 @@ function execRgCommand(input: string, options?: string[]) {
 						});
 
 						proc.stderr.on('data', (data) => {
-							searchResultProvider.update(tmp_file_name, data.toString());
+							searchResultProvider.update(search_id, data.toString());
 							appendFile(file_path, data.toString(), err => {
 								if (err) {
 									window.showErrorMessage(err.message);
@@ -204,6 +214,10 @@ function getTmpFileName(): string {
 	let file_name = "vscode-rg-result_";
 	file_name += Moment().format("YYYYMMDDHHmmssSSS");
 	return file_name + ".log";
+}
+
+function getSearchId(sword: string) :string {
+	return sword + "_" + Moment().format("YYYYMMDDHHmmssSSS");
 }
 
 function getEncoding() {

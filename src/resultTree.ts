@@ -54,6 +54,11 @@ export class SearchResultProvider implements vscode.TreeDataProvider<SearchResul
         this.refresh();
     }
 
+    public renameNode(node :SearchResultTreeItem, new_name: string) {
+        this.searchResultTree.renameRootNode(node, new_name);
+        this.refresh();
+    }
+
     // public foldNodesAtSameLevel(contextValue: string, search_id?: string) {
         
     //     let roots = this.searchResultTree.roots.slice();
@@ -154,6 +159,14 @@ export class SearchResultTree {
             let root = this.roots[this.roots.findIndex(value => {return value.search_id === node.search_id;})];
             let file = root.children[root.children.findIndex(value => {return value.label === node.file;})];
             file.children.splice(file.children.findIndex(value => {return (value.label === node.label) && (value.line === node.line);}), 1);
+        }
+    }
+
+    public renameRootNode(node :SearchResultTreeItem, new_name :string) {
+        if(node.contextValue === 'root') {
+            if(this.roots.findIndex(value => {return value.label === new_name;}) < 0) {
+                this.roots[this.roots.indexOf(node)].label = new_name;
+            }
         }
     }
 

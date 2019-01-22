@@ -57,6 +57,10 @@
             {
                 "command": "searchResult.deleteNode",
                 "title": "Delete" 
+            },
+            {
+                "command": "searchResult.renameNode",
+                "title": "Rename"
             }
         ],
         "menus": {
@@ -64,6 +68,10 @@
                 {
                     "command": "searchResult.deleteNode",
                     "when": "view == searchResult"
+                },
+                {
+                    "command": "searchResult.renameNode",
+                    "when": "view == searchResult && viewItem == root"
                 }
             ]
         },
