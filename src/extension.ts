@@ -3,6 +3,7 @@
 // Import the module and reference it with the alias vscode in your code below
 
 import { ExtensionContext, commands, window, workspace, Uri, ViewColumn, WebviewPanel, StatusBarAlignment, Range, Position, TextEditorRevealType, Selection } from 'vscode';
+import * as vscode from 'vscode';
 import * as child_process from "child_process";
 import { tmpdir } from 'os';
 import * as path from 'path';
@@ -15,6 +16,7 @@ import { SearchResultProvider } from "./resultTree";
 
 let genarated_tmp_files: string[] = [];
 let searchResultProvider = new SearchResultProvider();
+let rg_path = path.join(vscode.env.appRoot, "node_modules.asar.unpacked", "vscode-ripgrep", "bin", "rg");
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -80,7 +82,7 @@ export function deactivate() {
 
 async function rgTest() {
 	child_process.execFile(
-		"rg", ["--version"],
+		rg_path, ["--version"],
 		{ encoding: "buffer" },
 		(error, stdout, stderr) => {
 			if (stdout) {
@@ -172,7 +174,8 @@ function execRgCommand(input: string, options?: string[]) {
 						if (options) {
 							args = args.concat(options);
 						}
-						let proc = child_process.spawn("rg", args, { shell: true });
+
+						let proc = child_process.spawn("rg", args, { shell: true, cwd: path.dirname(rg_path) });
 						proc.stdout.setEncoding("utf-8");
 
 						let icon = window.createStatusBarItem(StatusBarAlignment.Right);
