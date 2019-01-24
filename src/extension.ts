@@ -36,7 +36,7 @@ export function activate(context: ExtensionContext) {
 	}));
 	context.subscriptions.push(commands.registerCommand('searchResult.renameNode', (node) => { 
 		window.showInputBox({prompt: "input the new name."}).then((value) => {
-			if(node.contextValue === 'root') {
+			if(node.contextValue !== 'file') {
 				if(value) {
 					searchResultProvider.renameNode(node, value);
 				}

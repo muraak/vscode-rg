@@ -149,24 +149,29 @@ export class SearchResultTree {
 
     public deleteNode(node :SearchResultTreeItem) {
         if(node.contextValue === 'root') {
-            this.roots.splice(this.roots.findIndex(value => {return value.label === node.label;}), 1);
+            this.roots.splice(this.roots.findIndex(value => {return value.search_id === node.search_id;}), 1);
         }
         else if(node.contextValue === 'file') {
-            let root = this.roots[this.roots.findIndex(value => {return value.label === node.search_id;})];
+            let root = this.roots[this.roots.findIndex(value => {return value.search_id === node.search_id;})];
             root.children.splice(root.children.findIndex(value => {return value.label === node.label;}), 1);
         }
         else if(node.contextValue === 'result') {
-            let root = this.roots[this.roots.findIndex(value => {return value.label === node.search_id;})];
+            let root = this.roots[this.roots.findIndex(value => {return value.search_id === node.search_id;})];
             let file = root.children[root.children.findIndex(value => {return value.label === node.file;})];
-            file.children.splice(file.children.findIndex(value => {return (value.label === node.label) && (value.line === node.line);}), 1);
+            //FIXME: If rg put out multiple matches located at same line as different results,
+            //       below code can't idetify those results.
+            //       Therefore the first added result will be deleted forcely in this case.... 
+            //       But we doesn't need to care for default settings of rg option.
+            file.children.splice(file.children.findIndex(value => {return (value.body === node.body) && (value.line === node.line);}), 1);
         }
     }
 
     public renameRootNode(node :SearchResultTreeItem, new_name :string) {
-        if(node.contextValue === 'root') {
-            if(this.roots.findIndex(value => {return value.label === new_name;}) < 0) {
-                this.roots[this.roots.indexOf(node)].label = new_name;
-            }
+        if(node.contextValue !== 'file') {
+            // we allow duplicated name because we can indentify all items by jump location. 
+            // if(this.roots.findIndex(value => {return value.label === new_name;}) < 0) {
+                node.label = new_name;
+            // }
         }
     }
 
@@ -198,6 +203,7 @@ export class SearchResultTreeItem extends vscode.TreeItem {
         collapsibleState: vscode.TreeItemCollapsibleState): SearchResultTreeItem {
         let node = new SearchResultTreeItem(search_id, collapsibleState);
         node.contextValue = "root";
+        node.search_id = search_id;
         return node;
     }
 

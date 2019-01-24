@@ -71,7 +71,7 @@
                 },
                 {
                     "command": "searchResult.renameNode",
-                    "when": "view == searchResult && viewItem == root"
+                    "when": "view == searchResult && viewItem != file"
                 }
             ]
         },
