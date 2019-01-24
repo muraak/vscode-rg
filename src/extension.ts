@@ -16,7 +16,8 @@ import { SearchResultProvider } from "./resultTree";
 
 let genarated_tmp_files: string[] = [];
 let searchResultProvider = new SearchResultProvider();
-let rg_path = path.join(vscode.env.appRoot, "node_modules.asar.unpacked", "vscode-ripgrep", "bin", "rg");
+
+const rg_path = path.join(vscode.env.appRoot, "node_modules.asar.unpacked", "vscode-ripgrep", "bin", "rg");
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
