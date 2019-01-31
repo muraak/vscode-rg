@@ -23,7 +23,9 @@ export class SearchResultProvider implements vscode.TreeDataProvider<SearchResul
     }
 
     update(search_id :string, result_txt :string) {
+        
         this.searchResultTree.updateResultNode(search_id, result_txt);
+
         this.refresh();
     }
 
@@ -93,6 +95,9 @@ export class SearchResultTree {
     // the label of root must be search_id
     public roots: SearchResultTreeItem[] = [];
 
+    private readonly MAX_RESULT = 10240;
+    private numOfResults = 0;
+
     public addResultNode(search_id: string) {
 
         if (this.roots.findIndex(value => { return value.id === search_id; }) < 0) {
@@ -107,6 +112,21 @@ export class SearchResultTree {
 
         // each line of reult_txt should be a single result of grep
         result_txt.split(/\r?\n/).forEach(it => {
+            
+            // abort adding item when over the limit
+            //check for root
+            if(this.findRoot(search_id).numOfResults > this.MAX_RESULT) {
+                this.findRoot(search_id).label = this.findRoot(search_id).label + " !!!!!incomplete!!!!!";
+                let e :Error = new Error(`The result of ${search_id} is too much for tree view(limit is: ${this.MAX_RESULT}).\n Please retry search with more specific word.`);
+                throw e;
+            }
+            // check for all result in tree view
+            if(this.numOfResults > this.MAX_RESULT) {
+                this.findRoot(search_id).label = this.findRoot(search_id).label + " !!!!!incomplete!!!!!";
+                let e :Error = new Error(`There are too match results in tree view(limit is: ${this.MAX_RESULT}).\n Please delete unnessesary results or retry search with more specific word.`);
+                throw e;
+            }
+            
             let result = this.parseLine(it);
 
             if (result) {
@@ -116,6 +136,10 @@ export class SearchResultTree {
                         SearchResultTreeItem.createResultNode(
                             search_id, result!.file, result!.line, result!.body,
                             vscode.TreeItemCollapsibleState.None));
+                    
+                    // update number of results. 
+                    this.findRoot(search_id).numOfResults++;
+                    this.numOfResults++;
                 }
             }
         });
@@ -149,11 +173,21 @@ export class SearchResultTree {
 
     public deleteNode(node :SearchResultTreeItem) {
         if(node.contextValue === 'root') {
+            // update number of results. 
+            this.numOfResults = this.numOfResults - this.findRoot(node.search_id).numOfResults++;
+
             this.roots.splice(this.roots.findIndex(value => {return value.search_id === node.search_id;}), 1);
         }
         else if(node.contextValue === 'file') {
+            
             let root = this.roots[this.roots.findIndex(value => {return value.search_id === node.search_id;})];
-            root.children.splice(root.children.findIndex(value => {return value.label === node.label;}), 1);
+            let idx_node_to_delete = root.children.findIndex(value => {return value.label === node.label;});
+            // update number of results. 
+            let amount_of_decrement =  root.children[idx_node_to_delete].children.length;
+            this.findRoot(node.search_id).numOfResults 
+                = this.findRoot(node.search_id).numOfResults - amount_of_decrement;
+            this.numOfResults = this.numOfResults - amount_of_decrement;
+            root.children.splice(idx_node_to_delete, 1);
         }
         else if(node.contextValue === 'result') {
             let root = this.roots[this.roots.findIndex(value => {return value.search_id === node.search_id;})];
@@ -163,6 +197,10 @@ export class SearchResultTree {
             //       Therefore the first added result will be deleted forcely in this case.... 
             //       But we doesn't need to care for default settings of rg option.
             file.children.splice(file.children.findIndex(value => {return (value.body === node.body) && (value.line === node.line);}), 1);
+
+            //update number of results
+            this.numOfResults--;
+            root.numOfResults--;
         }
     }
 
@@ -187,6 +225,11 @@ export class SearchResultTree {
             return undefined;
         }
     }
+
+    private findRoot(search_id :string) {
+
+        return this.roots[this.roots.findIndex(item => { return item.search_id === search_id; })];
+    }
 }
 
 export class SearchResultTreeItem extends vscode.TreeItem {
@@ -195,6 +238,8 @@ export class SearchResultTreeItem extends vscode.TreeItem {
     public file: string = "";
     public line: number = 0;
     public body: string = "";
+
+    public numOfResults = 0;
 
     public children: SearchResultTreeItem[] = [];
 

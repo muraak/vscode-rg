@@ -184,10 +184,19 @@ function execRgCommand(input: string, options?: string[]) {
 						icon.text = "$(pulse)rg searching...";
 						icon.show();
 
+						let error :any = undefined;
 						proc.stdout.on('data', (data) => {
-							
-							// update tree
-							searchResultProvider.update(search_id, data.toString());
+							if(!error){ 
+							try {
+								// update tree
+								searchResultProvider.update(search_id, data.toString());
+							}catch(e) {
+								window.showErrorMessage(e.toString());
+								error = e;
+								searchResultProvider.refresh();
+							}
+						}
+
 							appendFile(file_path, data.toString(), err => {
 								if (err) {
 									window.showErrorMessage(err.message);
