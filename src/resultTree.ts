@@ -151,7 +151,7 @@ export class SearchResultTree {
         let search = this.roots.find((value) => { return value.label === search_id; });
 
         if (search) {
-            let file_node = search.children.find((value) => {return value.label === file; });
+            let file_node = search.children.find((value) => {return value.file === file; });
 
             if(file_node) {
                 return search.children[search.children.indexOf(file_node)];
@@ -191,7 +191,7 @@ export class SearchResultTree {
         }
         else if(node.contextValue === 'result') {
             let root = this.roots[this.roots.findIndex(value => {return value.search_id === node.search_id;})];
-            let file = root.children[root.children.findIndex(value => {return value.label === node.file;})];
+            let file = root.children[root.children.findIndex(value => {return value.file === node.file;})];
             //FIXME: If rg put out multiple matches located at same line as different results,
             //       below code can't idetify those results.
             //       Therefore the first added result will be deleted forcely in this case.... 
@@ -215,6 +215,7 @@ export class SearchResultTree {
 
     private parseLine(line_of_search_result: string)
         : { file: string, line: number, body: string } | undefined {
+        
 
         let match = line_of_search_result.match(/(^.*):(?!\\)([0-9]+):(.*)$/);
 
@@ -256,9 +257,11 @@ export class SearchResultTreeItem extends vscode.TreeItem {
         search_id: string,
         file: string,
         collapsibleState: vscode.TreeItemCollapsibleState): SearchResultTreeItem {
-        let node = new SearchResultTreeItem(file, collapsibleState);
+        let path = require('path');
+        let node = new SearchResultTreeItem(file.replace(new RegExp(("^" + vscode.workspace.workspaceFolders![0]!.uri.fsPath + path.sep).replace(/(\\|\/|\.)/g, "\\$1"), 'g'), ""), collapsibleState);
         node.search_id = search_id;
         node.contextValue = "file";
+        node.file = file;
         return node;
     }
 

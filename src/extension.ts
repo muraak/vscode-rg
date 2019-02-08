@@ -26,6 +26,9 @@ export function activate(context: ExtensionContext) {
 	context.subscriptions.push(commands.registerCommand('rg.test', rgTest));
 	context.subscriptions.push(commands.registerCommand('rg.quickSearch', rgQuickSearch));
 	context.subscriptions.push(commands.registerCommand('rg.detailSearch', () => { showDetailSearchWebView(context); }));
+
+	// it seems to I must implement special documentLinkProvider...
+	// see: https://github.com/Microsoft/vscode-extension-samples/blob/master/contentprovider-sample/src/extension.ts
 	
 	// bind the function to context menu of search result
 	// context.subscriptions.push(commands.registerCommand('searchResult.foldSameLevelNode', (node) => { 
@@ -186,18 +189,29 @@ function execRgCommand(input: string, options?: string[]) {
 
 						let error :any = undefined;
 						proc.stdout.on('data', (data) => {
-							if(!error){ 
-							try {
-								// update tree
-								searchResultProvider.update(search_id, data.toString());
-							}catch(e) {
-								window.showErrorMessage(e.toString());
-								error = e;
-								searchResultProvider.refresh();
-							}
-						}
 
-							appendFile(file_path, data.toString(), err => {
+							// STD OUT
+							data = data.toString(); // buf -> string
+
+							if (!error) {
+								try {
+									// update tree
+									// We don't convert abs path  to rel path here 
+									// because tree should know abs path of result for jumping. 
+									searchResultProvider.update(search_id, data);
+								} catch (e) {
+									window.showErrorMessage(e.toString());
+									error = e;
+									searchResultProvider.refresh();
+								}
+							}
+
+							// convert absolute path to that of relative if necessary.
+							// if(workspace.getConfiguration("rg", null).get<boolean>("enableRelativePath")) {
+							// 	data = data.replace(new RegExp((vscode.workspace.workspaceFolders![0]!.uri.fsPath + path.sep).replace(/(\\|\/|\.)/g, "\\$1"), 'g'), "");
+							// }
+
+							appendFile(file_path, data, err => {
 								if (err) {
 									window.showErrorMessage(err.message);
 								}
@@ -205,8 +219,21 @@ function execRgCommand(input: string, options?: string[]) {
 						});
 
 						proc.stderr.on('data', (data) => {
-							searchResultProvider.update(search_id, data.toString());
-							appendFile(file_path, data.toString(), err => {
+
+							// STD ERROR
+							data = data.toString(); // buf -> string
+
+							// update tree
+							// We don't convert abs path to rel path here 
+							// because tree should know abs path of result for jumping. 
+							searchResultProvider.update(search_id, data);
+
+							// convert absolute path to that of relative if necessary.
+							// if (workspace.getConfiguration("rg", null).get<boolean>("enableRelativePath")) {
+							// 	data = data.replace(new RegExp((vscode.workspace.workspaceFolders![0]!.uri.fsPath + path.sep).replace(/(\\|\/|\.)/g, "\\$1"), 'g'), "");
+							// }
+
+							appendFile(file_path, data, err => {
 								if (err) {
 									window.showErrorMessage(err.message);
 								}
