@@ -51,6 +51,20 @@ export class SearchResultProvider implements vscode.TreeDataProvider<SearchResul
         }
     }
 
+    getParent(element: SearchResultTreeItem): Thenable<SearchResultTreeItem|undefined> {
+        if(element.contextValue === 'root') {
+            return Promise.reject();
+        }
+        else if(element.contextValue === 'file') {
+            return Promise.resolve(this.searchResultTree.roots.find(value => { return value.search_id === element.search_id; }));
+        }
+        else if(element.contextValue === 'result') {
+            return Promise.resolve(this.searchResultTree.findOrCreateFileNodeToAdd(element.search_id, element.file));
+        }
+
+        return Promise.reject();
+    }
+
     public deleteNode(node :SearchResultTreeItem) {
         this.searchResultTree.deleteNode(node);
         this.refresh();
@@ -87,6 +101,10 @@ export class SearchResultProvider implements vscode.TreeDataProvider<SearchResul
 
     //     this.refresh();
     // }
+
+    public getNextResult(item :SearchResultTreeItem) {
+        return this.searchResultTree.getNextResult(item);
+    }
 
 }
 
@@ -145,7 +163,7 @@ export class SearchResultTree {
         });
     }
 
-    private findOrCreateFileNodeToAdd(search_id: string, file: string)
+    public findOrCreateFileNodeToAdd(search_id: string, file: string)
         : SearchResultTreeItem | undefined {
 
         let search = this.roots.find((value) => { return value.label === search_id; });
@@ -229,6 +247,39 @@ export class SearchResultTree {
     private findRoot(search_id :string) {
 
         return this.roots[this.roots.findIndex(item => { return item.search_id === search_id; })];
+    }
+
+    public getNextResult(item :SearchResultTreeItem) {
+        if(item.contextValue === "root") {
+            return item.children![0].children![0];
+        }
+        else if(item.contextValue === "file") {
+            return item.children[0];
+        }
+        else if(item.contextValue === "result"){
+            let parent = this.findOrCreateFileNodeToAdd(item.search_id, item.file);
+
+            if (parent) {
+                let result_idx = parent!.children.findIndex(value => {
+                    return (value.body === item.body) && (value.line === item.line);
+                });
+
+                if (result_idx < parent.children.length - 1) {
+                    return parent.children[result_idx + 1];
+                }
+                else {
+                    let file_idx = this.findRoot(parent.search_id).children.findIndex(value => {
+                        return value.file === parent!.file;
+                    });
+
+                    if(file_idx < this.findRoot(parent.search_id).children.length - 1) {
+                        return this.findRoot(parent.search_id).children[file_idx + 1].children[0];
+                    }
+                }
+            }
+        }
+
+        return undefined;
     }
 }
 

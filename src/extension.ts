@@ -11,11 +11,12 @@ import { appendFile, unlink } from 'fs';
 import * as Moment from 'moment';
 import * as fs from 'fs';
 import * as iconv from "iconv-lite";
-import { SearchResultProvider } from "./resultTree";
+import { SearchResultProvider, SearchResultTreeItem } from "./resultTree";
 
 
 let genarated_tmp_files: string[] = [];
 let searchResultProvider = new SearchResultProvider();
+let treeView : vscode.TreeView<SearchResultTreeItem>;
 
 const rg_path = path.join(vscode.env.appRoot, "node_modules.asar.unpacked", "vscode-ripgrep", "bin", "rg");
 
@@ -26,7 +27,9 @@ export function activate(context: ExtensionContext) {
 	context.subscriptions.push(commands.registerCommand('rg.test', rgTest));
 	context.subscriptions.push(commands.registerCommand('rg.quickSearch', rgQuickSearch));
 	context.subscriptions.push(commands.registerCommand('rg.detailSearch', () => { showDetailSearchWebView(context); }));
+	context.subscriptions.push(commands.registerCommand('rg.moveToNext', () => { treeView.reveal(searchResultProvider.getNextResult(treeView.selection[0])!, {select: true, focus: true}); }));
 	
+
 	// bind the function to context menu of search result
 	// context.subscriptions.push(commands.registerCommand('searchResult.foldSameLevelNode', (node) => { 
 		// searchResultProvider.foldNodesAtSameLevel(node.contextValue, node.search_id);
@@ -59,7 +62,8 @@ export function activate(context: ExtensionContext) {
 
 	// searchResultProvider = new SearchResultProvider();
 
-	window.registerTreeDataProvider('searchResult', searchResultProvider);
+	// window.registerTreeDataProvider('searchResult', searchResultProvider);
+	treeView = window.createTreeView<SearchResultTreeItem>("searchResult", { treeDataProvider: searchResultProvider });
 }
 
 // this method is called when your extension is deactivated
@@ -82,18 +86,20 @@ export function deactivate() {
 }
 
 async function rgTest() {
-	child_process.execFile(
-		rg_path, ["--version"],
-		{ encoding: "buffer" },
-		(error, stdout, stderr) => {
-			if (stdout) {
-				window.showInformationMessage("It works fine! => " + iconv.decode(stdout, getEncoding()));
-			}
+	// child_process.execFile(
+	// 	rg_path, ["--version"],
+	// 	{ encoding: "buffer" },
+	// 	(error, stdout, stderr) => {
+	// 		if (stdout) {
+	// 			window.showInformationMessage("It works fine! => " + iconv.decode(stdout, getEncoding()));
+	// 		}
 
-			if (stderr) {
-				window.showErrorMessage(iconv.decode(stderr, getEncoding()));
-			}
-		});
+	// 		if (stderr) {
+	// 			window.showErrorMessage(iconv.decode(stderr, getEncoding()));
+	// 		}
+	// 	});
+
+	treeView.reveal(searchResultProvider.getNextResult(treeView.selection[0])!, {select: true, focus: true});
 }
 
 async function rgQuickSearch() {
