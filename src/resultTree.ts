@@ -52,17 +52,14 @@ export class SearchResultProvider implements vscode.TreeDataProvider<SearchResul
     }
 
     getParent(element: SearchResultTreeItem): Thenable<SearchResultTreeItem|undefined> {
-        if(element.contextValue === 'root') {
-            return Promise.reject();
-        }
-        else if(element.contextValue === 'file') {
-            return Promise.resolve(this.searchResultTree.roots.find(value => { return value.search_id === element.search_id; }));
-        }
-        else if(element.contextValue === 'result') {
-            return Promise.resolve(this.searchResultTree.findOrCreateFileNodeToAdd(element.search_id, element.file));
-        }
+        let parent = this.searchResultTree.getParent(element);
 
-        return Promise.reject();
+        if(parent) {
+            return Promise.resolve(parent);
+        }
+        else {
+            return Promise.reject()
+        }
     }
 
     public deleteNode(node :SearchResultTreeItem) {
@@ -106,6 +103,9 @@ export class SearchResultProvider implements vscode.TreeDataProvider<SearchResul
         return this.searchResultTree.getNextResult(item);
     }
 
+    public getPreviousResult(item :SearchResultTreeItem) {
+        return this.searchResultTree.getPreviousResult(item);
+    }
 }
 
 export class SearchResultTree {
@@ -250,31 +250,99 @@ export class SearchResultTree {
         return this.roots[this.roots.findIndex(item => { return item.search_id === search_id; })];
     }
 
+    public getParent(item :SearchResultTreeItem) :SearchResultTreeItem | undefined{
+        if(item.contextValue === "root") { return undefined; }
+        if(item.contextValue === "file") {
+            return this.roots[this.roots.findIndex(value => { return value.search_id === item.search_id; })];
+        }
+        if(item.contextValue === "result") {
+            return this.findOrCreateFileNodeToAdd(item.search_id, item.file);
+        }
+    }
+
+    public getOwnIdxOnParent(item :SearchResultTreeItem) :number | undefined {
+        
+        if(item.contextValue === "root") {
+            return this.roots.findIndex(value => {return value.search_id === item.search_id;});
+        }
+        if(item.contextValue === "file") {
+            return this.getParent(item)!.children.findIndex(value => { return value.file === item.file; });
+        }
+        if(item.contextValue === "result") {
+            return this.getParent(item)!.children.findIndex(value => {return (value.body === item.body) && (value.line === item.line);});
+        }
+    }
+
     public getNextResult(item :SearchResultTreeItem) {
         if(item.contextValue === "root") {
             return item.children![0].children![0];
         }
         else if(item.contextValue === "file") {
-            return item.children[0];
+            return item.children![0];
         }
-        else if(item.contextValue === "result"){
-            let parent = this.findOrCreateFileNodeToAdd(item.search_id, item.file);
+        else if(item.contextValue === "result") {
+            
+            let idx_on_parent = this.getOwnIdxOnParent(item);
+            let parent = this.getParent(item);
 
-            if (parent) {
-                let result_idx = parent!.children.findIndex(value => {
-                    return (value.body === item.body) && (value.line === item.line);
-                });
-
-                if (result_idx < parent.children.length - 1) {
-                    return parent.children[result_idx + 1];
+            if(idx_on_parent !== undefined && parent !== undefined) {
+                if(idx_on_parent < parent.children.length - 1) {
+                    return parent.children[idx_on_parent + 1];
                 }
-                else {
-                    let file_idx = this.findRoot(parent.search_id).children.findIndex(value => {
-                        return value.file === parent!.file;
-                    });
 
-                    if(file_idx < this.findRoot(parent.search_id).children.length - 1) {
-                        return this.findRoot(parent.search_id).children[file_idx + 1].children[0];
+                let grandParent = this.getParent(parent);
+                let idx_on_grandParent = this.getOwnIdxOnParent(parent);
+
+                if(grandParent !== undefined && idx_on_grandParent !== undefined) {
+                    if(idx_on_grandParent < grandParent.children.length -1) {
+                        return grandParent.children[idx_on_grandParent + 1].children[0];
+                    }
+                    else {
+                        return grandParent.children[0].children[0];
+                    }
+                }
+            }
+        }
+
+        return undefined;
+    }
+
+    public getPreviousResult(item :SearchResultTreeItem) {
+        
+        if(item.contextValue === "root") {
+            return item.children![item.children!.length - 1].children![item.children![item.children!.length - 1].children!.length - 1];
+        }
+        else if(item.contextValue === "file") {
+            let parent = this.getParent(item);
+            let idx_on_parent = this.getOwnIdxOnParent(item);
+
+            if (parent !== undefined && idx_on_parent !== undefined) {
+                if (idx_on_parent > 0) {
+                    let children_of_prev_parent =  parent.children[idx_on_parent - 1].children;
+                    return children_of_prev_parent[children_of_prev_parent.length - 1];
+                }
+            }
+        }
+        else if(item.contextValue === "result") {
+            
+            let idx_on_parent = this.getOwnIdxOnParent(item);
+            let parent = this.getParent(item);
+
+            if(idx_on_parent !== undefined && parent !== undefined) {
+                if(idx_on_parent > 0) {
+                    return parent.children[idx_on_parent - 1];
+                }
+
+                let grandParent = this.getParent(parent);
+                let idx_on_grandParent = this.getOwnIdxOnParent(parent);
+
+                if(grandParent !== undefined && idx_on_grandParent !== undefined) {
+                    if(idx_on_grandParent > 0) {
+                        let children_of_prev_grandParent =  grandParent.children[idx_on_grandParent - 1].children;
+                        return children_of_prev_grandParent[children_of_prev_grandParent.length - 1];
+                    }
+                    else {
+                        return grandParent.children[grandParent.children.length - 1].children[grandParent.children[grandParent.children.length - 1].children.length - 1];
                     }
                 }
             }

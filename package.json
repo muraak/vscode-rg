@@ -44,15 +44,15 @@
         "commands": [
             {
                 "command": "rg.test",
-                "title": "Rg Test"
+                "title": "Rg: Test"
             },
             {
                 "command": "rg.quickSearch",
-                "title": "Rg Quick Search"
+                "title": "Rg: Quick Search"
             },
             {
                 "command": "rg.detailSearch",
-                "title": "Rg Detail Search"
+                "title": "Rg: Detail Search"
             },
             {
                 "command": "searchResult.deleteNode",
@@ -61,6 +61,14 @@
             {
                 "command": "searchResult.renameNode",
                 "title": "Rename"
+            },
+            {
+                "command": "rg.moveToNext",
+                "title": "Rg: Move to next result(for tree view)"
+            },
+            {
+                "command": "rg.moveToPrevious",
+                "title": "Rg: Move to previous result(for tree view)"
             }
         ],
         "menus": {

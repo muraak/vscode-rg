@@ -10,6 +10,7 @@ import * as path from 'path';
 import { appendFile, unlink } from 'fs';
 import * as Moment from 'moment';
 import * as fs from 'fs';
+import * as iconv from 'iconv-lite';
 import { SearchResultProvider, SearchResultTreeItem } from "./resultTree";
 
 
@@ -30,7 +31,25 @@ export function activate(context: ExtensionContext) {
 	// it seems to I must implement special documentLinkProvider...
 	// see: https://github.com/Microsoft/vscode-extension-samples/blob/master/contentprovider-sample/src/extension.ts
 	
-	context.subscriptions.push(commands.registerCommand('rg.moveToNext', () => { treeView.reveal(searchResultProvider.getNextResult(treeView.selection[0])!, {select: true, focus: true}); }));
+	context.subscriptions.push(commands.registerCommand('rg.moveToNext', () => {
+		if (treeView !== undefined && treeView.selection.length > 0) {
+			let destNode = searchResultProvider.getNextResult(treeView.selection[0]);
+			if (destNode) {
+				treeView.reveal(destNode, { select: true, focus: true });
+				jumpTo(destNode.file, destNode.line);
+			}
+		}
+	}));
+
+	context.subscriptions.push(commands.registerCommand('rg.moveToPrevious', () => {
+		if (treeView !== undefined && treeView.selection.length > 0) {
+			let destNode = searchResultProvider.getPreviousResult(treeView.selection[0]);
+			if (destNode) {
+				treeView.reveal(destNode, { select: true, focus: true });
+				jumpTo(destNode.file, destNode.line);
+			}
+		}
+	}));
 	
 
 	// bind the function to context menu of search result
@@ -53,20 +72,24 @@ export function activate(context: ExtensionContext) {
 
 	// bind the function executed when search result item was selected 
 	commands.registerCommand("rg.jumpToSearchResult", ((file, line) => {
-		workspace.openTextDocument(Uri.file(file)).then((doc) => {
-			window.showTextDocument(doc, undefined, true/*preserve focus*/).then((editor) => {
-				editor.selection = new Selection(new Position(line - 1, 0), new Position(line - 1, 0));
-				editor.revealRange(new Range(new Position(line - 1, 0),new Position(line - 1, 0)), TextEditorRevealType.InCenter);
-				// take the focus back to result view
-				commands.executeCommand("workbench.view.extension.rg-search-result");
-			});
-		});
+		jumpTo(file, line);
 	}));
 
 	// searchResultProvider = new SearchResultProvider();
 
 	// window.registerTreeDataProvider('searchResult', searchResultProvider);
 	treeView = window.createTreeView<SearchResultTreeItem>("searchResult", { treeDataProvider: searchResultProvider });
+}
+
+function jumpTo(file :string, line :number) {
+	workspace.openTextDocument(Uri.file(file)).then((doc) => {
+		window.showTextDocument(doc, undefined, true/*preserve focus*/).then((editor) => {
+			editor.selection = new Selection(new Position(line - 1, 0), new Position(line - 1, 0));
+			editor.revealRange(new Range(new Position(line - 1, 0),new Position(line - 1, 0)), TextEditorRevealType.InCenter);
+			// take the focus back to result view
+			commands.executeCommand("workbench.view.extension.rg-search-result");
+		});
+	});
 }
 
 // this method is called when your extension is deactivated
@@ -89,20 +112,18 @@ export function deactivate() {
 }
 
 async function rgTest() {
-	// child_process.execFile(
-	// 	rg_path, ["--version"],
-	// 	{ encoding: "buffer" },
-	// 	(error, stdout, stderr) => {
-	// 		if (stdout) {
-	// 			window.showInformationMessage("It works fine! => " + iconv.decode(stdout, getEncoding()));
-	// 		}
+	child_process.execFile(
+		rg_path, ["--version"],
+		{ encoding: "buffer" },
+		(error, stdout, stderr) => {
+			if (stdout) {
+				window.showInformationMessage("It works fine! => " + iconv.decode(stdout, getEncoding()));
+			}
 
-	// 		if (stderr) {
-	// 			window.showErrorMessage(iconv.decode(stderr, getEncoding()));
-	// 		}
-	// 	});
-
-	treeView.reveal(searchResultProvider.getNextResult(treeView.selection[0])!, {select: true, focus: true});
+			if (stderr) {
+				window.showErrorMessage(iconv.decode(stderr, getEncoding()));
+			}
+		});
 }
 
 async function rgQuickSearch() {
